@@ -1,3 +1,4 @@
+import axios, { AxiosError } from 'axios';
 import { api } from './api';
 
 export type TripDetails = {
@@ -39,8 +40,44 @@ async function create({
 
     return data;
   } catch (error) {
+    handleAxiosError(error);
+    throw error; // Propaga o erro para ser tratado posteriormente, se necessário
+  }
+}
+
+async function update({
+  id,
+  destination,
+  starts_at,
+  ends_at,
+}: Omit<TripDetails, 'is_confirmed'>) {
+  try {
+    await api.put(`/trips/${id}`, {
+      destination,
+      starts_at,
+      ends_at,
+    });
+  } catch (error) {
+    handleAxiosError(error);
     throw error;
   }
 }
 
-export const tripServer = { getById, create };
+function handleAxiosError(error: unknown): void {
+  if (axios.isAxiosError(error)) {
+    if (error.response) {
+      console.log('Response error:', error.response.data);
+      console.log('Response status:', error.response.status);
+      console.log('Response headers:', error.response.headers);
+    } else if (error.request) {
+      console.log('Request error:', error.request);
+    } else {
+      console.log('Error', error.message);
+    }
+    console.log('Config error:', error.config);
+  } else {
+    console.log('Erro desconhecido:', error);
+  }
+}
+
+export const tripServer = { getById, create, update };
